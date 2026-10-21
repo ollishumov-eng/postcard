@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>С Днём Рождения, Мама!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 30%, #ff9a9e 60%, #fad0c4 100%);
+            font-family: 'Segoe UI', 'Georgia', cursive, sans-serif;
+            perspective: 1000px;
+            padding: 10px;
+        }
+
+        /* Плавающие лепестки */
+        .petal {
+            position: fixed;
+            top: -10%;
+            opacity: 0.6;
+            font-size: 1.5rem;
+            animation: fall linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg) translateX(0); }
+            50% { transform: translateY(50vh) rotate(180deg) translateX(50px); }
+            100% { transform: translateY(110vh) rotate(360deg) translateX(-30px); }
+        }
+
+        /* ====== Конверт ====== */
+        .envelope-wrapper {
+            position: relative;
+            width: 420px;
+            height: 300px;
+            max-width: 86vw;
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .envelope-wrapper:hover {
+            transform: scale(1.03);
+        }
+
+        .envelope-wrapper.opened {
+            animation: pulse 0.6s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .envelope-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #f8d5c8, #f0b8a6);
+            border-radius: 8px;
+            box-shadow: 0 20px 50px rgba(180, 80, 80, 0.35), inset 0 0 40px rgba(255,255,255,0.3);
+        }
+
+        /* Клапаны сделаны в процентах через clip-path — так конверт
+           корректно масштабируется на любом экране телефона */
+        .envelope-left,
+        .envelope-right,
+        .envelope-bottom,
+        .envelope-top {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .envelope-left {
+            background: #f5c9b8;
+            clip-path: polygon(0 0, 50% 50%, 0 100%);
+            border-radius: 8px 0 0 8px;
+            filter: brightness(1.02);
+        }
+
+        .envelope-right {
+            background: #f5c9b8;
+            clip-path: polygon(100% 0, 50% 50%, 100% 100%);
+            border-radius: 0 8px 8px 0;
+            filter: brightness(0.97);
+        }
+
+        .envelope-bottom {
+            background: #eeb4a0;
+            clip-path: polygon(0 100%, 50% 50%, 100% 100%);
+            border-radius: 0 0 8px 8px;
+            z-index: 5;
+            filter: brightness(1.01);
+        }
+
+        .envelope-top {
+            background: #f7cebe;
+            clip-path: polygon(0 0, 100% 0, 50% 50%);
+            border-radius: 8px 8px 0 0;
+            transform-origin: top center;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 6;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .heart-seal {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.8rem;
+            z-index: 7;
+            transition: all 0.5s ease;
+            filter: drop-shadow(0 2px 4px rgba(200, 50, 50, 0.5));
+            animation: heartbeat 1.5s ease-in-out infinite;
+            line-height: 1;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            15% { transform: translate(-50%, -50%) scale(1.15); }
+            30% { transform: translate(-50%, -50%) scale(1); }
+            45% { transform: translate(-50%, -50%) scale(1.1); }
+            60% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .envelope-wrapper.opened .heart-seal {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0) rotate(180deg);
+        }
+
+        .envelope-wrapper.opened .envelope-top {
+            transform: rotateX(180deg);
+        }
+
+        /* Подсказка */
+        .click-hint {
+            position: absolute;
+            bottom: -55px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.05rem;
+            color: #a05050;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.6);
+            animation: hintPulse 2s ease-in-out infinite;
+            white-space: nowrap;
+            z-index: 15;
+            user-select: none;
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { opacity: 0.6; transform: translateX(-50%) translateY(0); }
+            50% { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+        }
+
+        .envelope-wrapper.opened ~ .click-hint {
+            display: none;
+        }
+
+        /* ====== Открытка ====== */
+        .card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0) rotateY(90deg);
+            width: 500px;
+            max-width: 92vw;
+            max-height: 88vh;
+            max-height: 88dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background: linear-gradient(160deg, #fffdf8 0%, #fff5f0 40%, #ffe8e0 100%);
+            border-radius: 24px;
+            padding: 45px 35px 35px;
+            box-shadow: 0 30px 80px rgba(180, 80, 80, 0.4), 0 0 0 3px #fff, 0 0 0 6px #f8c8b8;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.9s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            text-align: center;
+        }
+
+        .card.show {
+            transform: translate(-50%, -50%) scale(1) rotateY(0deg);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .card::-webkit-scrollbar { width: 6px; }
+        .card::-webkit-scrollbar-thumb { background: #f0a898; border-radius: 3px; }
+
+        .card-deco-top {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            animation: floatDeco 3s ease-in-out infinite;
+        }
+
+        @keyframes floatDeco {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .card h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #e86a5e, #d94f7a, #b8446e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            line-height: 1.25;
+        }
+
+        .card .subtitle {
+            font-size: 1rem;
+            color: #b06a6a;
+            font-style: italic;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        .divider {
+            width: 120px;
+            height: 2px;
+            margin: 0 auto 25px;
+            background: linear-gradient(90deg, transparent, #e8a090, #d97a6a, #e8a090, transparent);
+            border-radius: 2px;
+        }
+
+        .card .message {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #6b4a4a;
+            margin-bottom: 20px;
+            text-align: left;
+            padding: 0 5px;
+        }
+
+        .card .message p {
+            margin-bottom: 14px;
+            text-indent: 1.5em;
+        }
+
+        .card .message p:first-child {
+            text-indent: 0;
+        }
+
+        .signature {
+            font-size: 1.1rem;
+            color: #c45a7a;
+            font-weight: 700;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        .heart-row {
+            font-size: 1.5rem;
+            letter-spacing: 8px;
+            margin-top: 18px;
+            animation: heartRow 2s ease-in-out infinite;
+        }
+
+        @keyframes heartRow {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 18px;
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: #c88;
+            transition: all 0.3s ease;
+            line-height: 1;
+            padding: 5px;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        .close-btn:hover {
+            background: #ffe0d8;
+            color: #a44;
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        /* Конфетти */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -20px;
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .confetti.go {
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(0) rotate(0deg) translateX(0); }
+            100% { opacity: 0; transform: translateY(105vh) rotate(720deg) translateX(100px); }
+        }
+
+        /* ====== Адаптив для телефонов ====== */
+        @media (max-width: 520px) {
+            .envelope-wrapper { width: 340px; height: 240px; }
+            .heart-seal { font-size: 2.2rem; }
+            .click-hint { font-size: 0.9rem; bottom: -45px; }
+
+            .card {
+                padding: 40px 20px 25px;
+                max-height: 90vh;
+                max-height: 90dvh;
+                border-radius: 18px;
+            }
+            .card h1 { font-size: 1.45rem; }
+            .card .subtitle { font-size: 0.9rem; margin-bottom: 18px; }
+            .card .message { font-size: 0.95rem; line-height: 1.7; }
+            .card-deco-top { font-size: 2rem; margin-bottom: 6px; }
+            .divider { margin-bottom: 18px; }
+            .signature { font-size: 1rem; }
+            .heart-row { font-size: 1.2rem; letter-spacing: 6px; }
+            .close-btn { top: 8px; right: 10px; width: 38px; height: 38px; font-size: 1.3rem; }
+        }
+
+        @media (max-width: 360px) {
+            .envelope-wrapper { width: 290px; height: 205px; }
+            .card h1 { font-size: 1.25rem; }
+            .card .message { font-size: 0.9rem; }
+        }
+
+        /* Уважаем настройку «уменьшить движение» */
+        @media (prefers-reduced-motion: reduce) {
+            .petal, .heart-seal, .card-deco-top, .heart-row, .click-hint { animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="envelope-wrapper" id="envelope" onclick="openCard()">
+        <div class="envelope-back"></div>
+        <div class="envelope-left"></div>
+        <div class="envelope-right"></div>
+        <div class="envelope-bottom"></div>
+        <div class="envelope-top"></div>
+        <div class="heart-seal">❤️</div>
+    </div>
+
+    <div class="click-hint" id="hint">Нажми на конверт</div>
+
+    <div class="card" id="card">
+        <button class="close-btn" onclick="closeCard()" title="Закрыть">✕</button>
+        <div class="card-deco-top">🌸🌷🌸</div>
+        <h1>С Днём Рождения,<br>мама!</h1>
+        <div class="subtitle">Самая лучшая на свете</div>
+        <div class="divider"></div>
+
+        <div class="message">
+            <p>Мама, поздравляю тебя с днём рождения! Я очень хочу сказать тебе спасибо. Спасибо за то, что ты всегда рядом. За то, что поддерживаешь меня, даже когда я ошибаюсь. За то, что выслушиваешь меня и помогаешь советом. Я это очень ценю.</p>
+            <p>Ты много для меня делаешь. Я знаю, что иногда бываю непростым, но ты всё равно меня любишь. Спасибо тебе за это. Ты умеешь поднять мне настроение, даже если день был плохой. Рядом с тобой всегда спокойно и тепло.</p>
+            <p>Желаю тебе крепкого здоровья. Желаю, чтобы ты меньше уставала и больше отдыхала. Пусть у тебя будет время на себя и на то, что тебе нравится. Я постараюсь, чтобы ты меньше за меня переживала. Пусть у тебя всё будет хорошо. Я тебя очень люблю.</p>
+        </div>
+
+        <div class="signature">Твой сын Степа</div>
+        <div class="heart-row">❤️ ❤️ ❤️</div>
+    </div>
+
+<script>
+    (function createPetals() {
+        const emojis = ['🌸', '🌷', '🌺', '🌹', '💐'];
+        for (let i = 0; i < 18; i++) {
+            const p = document.createElement('div');
+            p.className = 'petal';
+            p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            p.style.left = Math.random() * 100 + '%';
+            p.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+            p.style.animationDuration = (8 + Math.random() * 12) + 's';
+            p.style.animationDelay = (Math.random() * 15) + 's';
+            p.style.opacity = 0.3 + Math.random() * 0.5;
+            document.body.appendChild(p);
+        }
+    })();
+
+    let isOpened = false;
+
+    function openCard() {
+        if (isOpened) return;
+        isOpened = true;
+
+        const envelope = document.getElementById('envelope');
+        const card = document.getElementById('card');
+        const hint = document.getElementById('hint');
+
+        envelope.classList.add('opened');
+        hint.style.display = 'none';
+
+        setTimeout(() => {
+            card.classList.add('show');
+            launchConfetti();
+        }, 500);
+    }
+
+    function closeCard() {
+        const card = document.getElementById('card');
+        const envelope = document.getElementById('envelope');
+        const hint = document.getElementById('hint');
+
+        card.classList.remove('show');
+        envelope.classList.remove('opened');
+        isOpened = false;
+
+        setTimeout(() => {
+            hint.style.display = '';
+        }, 400);
+    }
+
+    function launchConfetti() {
+        const colors = ['#ff6b8a', '#ffa06b', '#ffd56b', '#a8e06b', '#6bcfff', '#c76bff', '#ff6bd4', '#ff4444'];
+        for (let i = 0; i < 60; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+            c.style.width = (6 + Math.random() * 10) + 'px';
+            c.style.height = (6 + Math.random() * 10) + 'px';
+            c.style.animationDuration = (2 + Math.random() * 3) + 's';
+            c.style.animationDelay = (Math.random() * 0.8) + 's';
+            document.body.appendChild(c);
+            setTimeout(() => c.remove(), 6000);
+        }
+    }
+</script>
+
+</body>
+</html>
